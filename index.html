@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TV Manager</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+  <div class="app-title">📺 TV Manager</div>
+  <div class="connection-area">
+    <div class="status-dot" id="statusDot"></div>
+    <input type="text" id="ipInput" placeholder="IP của TV (vd: 192.168.1.50)">
+    <input type="text" id="portInput" class="port-input" placeholder="5555" value="5555">
+    <button class="btn primary" id="connectBtn" onclick="handleConnect()">Kết nối</button>
+    <button class="btn danger" id="disconnectBtn" onclick="handleDisconnect()" style="display:none">Ngắt</button>
+    <div class="device-info" id="deviceInfo">Chưa kết nối</div>
+  </div>
+</div>
+
+<!-- Navigation Tabs -->
+<div class="nav-tabs">
+  <div class="nav-tab active" onclick="switchTab('packages')">Quản lý ứng dụng</div>
+  <div class="nav-tab" onclick="switchTab('cleaner')">🧹 Dọn dẹp</div>
+  <div class="nav-tab" onclick="switchTab('remote')">Điều khiển</div>
+  <div class="nav-tab" onclick="switchTab('screenshot')">Screenshot</div>
+  <div class="nav-tab" onclick="switchTab('backup')">Backup</div>
+  <div class="nav-tab" onclick="switchTab('launcher')">Launcher</div>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+
+  <!-- Packages Tab -->
+  <div class="tab-panel active" id="tab-packages">
+    <div class="filter-bar">
+      <div class="filter-chip active" onclick="setFilter('all')">Tất cả <span class="count-badge" id="countAll">0</span></div>
+      <div class="filter-chip" onclick="setFilter('enabled')">Đang bật <span class="count-badge" id="countEnabled">0</span></div>
+      <div class="filter-chip" onclick="setFilter('disabled')">Đã vô hiệu hóa <span class="count-badge" id="countDisabled">0</span></div>
+      <div class="filter-chip" onclick="setFilter('system')">Hệ thống <span class="count-badge" id="countSystem">0</span></div>
+      <input type="text" class="search-input" id="searchInput" placeholder="🔍 Tìm theo tên hoặc package..." oninput="renderTable()">
+    </div>
+    <div class="table-container" id="tableContainer">
+      <div class="loading" id="pkgLoading" style="display:none"><div class="spinner"></div> Đang tải danh sách...</div>
+      <table class="pkg-table">
+        <thead>
+          <tr>
+            <th class="col-num">#</th>
+            <th class="col-name">Tên & Package ID</th>
+            <th class="col-status">Trạng thái</th>
+            <th class="col-actions">Hành động</th>
+          </tr>
+        </thead>
+        <tbody id="pkgBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Cleaner Tab -->
+  <div class="tab-panel" id="tab-cleaner">
+    <div class="filter-bar">
+      <button class="btn primary" onclick="loadDebloatList()">🔍 Quét bloatware</button>
+      <span class="device-info" id="cleanerModel" style="margin-left:12px"></span>
+      <span class="device-info" id="cleanerMatch" style="margin-left:8px;color:var(--accent)"></span>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="btn" onclick="selectAllDebloat()">Chọn tất cả</button>
+        <button class="btn" onclick="deselectAllDebloat()">Bỏ chọn</button>
+        <button class="btn danger" onclick="runBatchDisable()">🧹 Dọn dẹp đã chọn</button>
+      </div>
+    </div>
+    <div class="table-container" id="cleanerContainer">
+      <div class="loading" id="cleanerLoading" style="display:none"><div class="spinner"></div> Đang quét...</div>
+      <table class="pkg-table">
+        <thead>
+          <tr>
+            <th style="width:40px"><input type="checkbox" id="checkAllDebloat" onchange="toggleAllDebloat(this.checked)"></th>
+            <th class="col-num">#</th>
+            <th class="col-name">Package</th>
+            <th style="width:200px">Mô tả</th>
+            <th class="col-status">Trạng thái</th>
+          </tr>
+        </thead>
+        <tbody id="cleanerBody"></tbody>
+      </table>
+      <div id="cleanerEmpty" style="padding:40px;text-align:center;color:var(--text-muted);font-size:13px">
+        Nhấn "Quét bloatware" để tìm ứng dụng rác trên TV dựa theo danh sách từ CleanYourTV
+      </div>
+    </div>
+  </div>
+
+  <!-- Remote Tab -->
+  <div class="tab-panel" id="tab-remote">
+    <div class="remote-panel">
+      <div class="dpad">
+        <div></div>
+        <button class="dpad-btn" onclick="sendKey(19)" title="Lên">▲</button>
+        <div></div>
+        <button class="dpad-btn" onclick="sendKey(21)" title="Trái">◀</button>
+        <button class="dpad-btn ok" onclick="sendKey(23)" title="OK">OK</button>
+        <button class="dpad-btn" onclick="sendKey(22)" title="Phải">▶</button>
+        <div></div>
+        <button class="dpad-btn" onclick="sendKey(20)" title="Xuống">▼</button>
+        <div></div>
+      </div>
+      <div class="remote-extras">
+        <button class="btn" onclick="sendKey(4)">⬅ Back</button>
+        <button class="btn" onclick="sendKey(3)">⌂ Home</button>
+        <button class="btn" onclick="sendKey(24)">🔊 Vol+</button>
+        <button class="btn" onclick="sendKey(25)">🔉 Vol-</button>
+        <button class="btn" onclick="sendKey(164)">🔇 Mute</button>
+        <button class="btn danger" onclick="sendKey(26)">⏻ Power</button>
+        <button class="btn" onclick="sendKey(85)">⏯ Play/Pause</button>
+        <button class="btn" onclick="sendKey(82)">☰ Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screenshot Tab -->
+  <div class="tab-panel" id="tab-screenshot">
+    <div class="screenshot-panel">
+      <button class="btn primary" onclick="takeScreenshot()">📸 Chụp màn hình TV</button>
+      <div id="screenshotArea">
+        <p style="color:var(--text-muted);font-size:13px">Nhấn nút để chụp màn hình TV</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Backup Tab -->
+  <div class="tab-panel" id="tab-backup">
+    <div class="backup-panel">
+      <div class="backup-card">
+        <h3>💾 Sao lưu (Backup)</h3>
+        <p>Sao lưu danh sách packages và trạng thái hiện tại của TV. File backup sẽ được lưu dưới dạng JSON.</p>
+        <button class="btn primary" onclick="doBackup()">Tạo Backup</button>
+      </div>
+      <div class="backup-card">
+        <h3>♻️ Khôi phục (Restore)</h3>
+        <p>Khôi phục từ file backup: bật lại tất cả các package đã bị vô hiệu hóa.</p>
+        <button class="btn" onclick="doRestore()">Chọn file backup & Khôi phục</button>
+      </div>
+      <div id="restoreLog" style="display:none">
+        <div class="backup-card">
+          <h3>Kết quả khôi phục</h3>
+          <div id="restoreResults" style="font-size:12px;font-family:monospace;color:var(--text-secondary);max-height:300px;overflow-y:auto"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Launcher Tab -->
+  <div class="tab-panel" id="tab-launcher">
+    <div class="backup-panel">
+      <div class="backup-card">
+        <h3>🏠 Launcher</h3>
+        <p id="launcherStatus">Kiểm tra trạng thái launcher...</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <button class="btn primary" onclick="installLauncher()">Cài / Cập nhật Launcher</button>
+          <button class="btn" onclick="installCustomApk()">Chọn file APK khác</button>
+          <button class="btn" onclick="checkLauncherStatus()">Kiểm tra trạng thái</button>
+        </div>
+      </div>
+      <div class="backup-card">
+        <h3>📱 Sắp xếp Dock Apps</h3>
+        <p>Kéo thả để sắp xếp thứ tự app trên dock (hàng chính) của launcher. Bấm "Lưu lên TV" để áp dụng.</p>
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <button class="btn" onclick="loadDockApps()">Tải danh sách app</button>
+          <button class="btn primary" onclick="saveDockOrder()">💾 Lưu lên TV</button>
+        </div>
+        <div id="dockList" style="display:flex;flex-direction:column;gap:4px"></div>
+        <div style="margin-top:12px">
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Thêm app vào dock:</p>
+          <div style="display:flex;gap:8px">
+            <select id="addDockSelect" style="flex:1;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);padding:6px 12px;font-size:12px"></select>
+            <button class="btn" onclick="addToDock()">+ Thêm</button>
+          </div>
+        </div>
+      </div>
+      <div class="backup-card">
+        <h3>🖼️ Hình nền tùy chỉnh</h3>
+        <p>Chọn ảnh từ Mac để đặt làm hình nền launcher trên TV.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn primary" onclick="uploadWallpaper()">📁 Chọn ảnh từ máy</button>
+          <button class="btn danger" onclick="removeWallpaper()">🗑 Xóa hình nền</button>
+        </div>
+        <div id="wallpaperPreview" style="margin-top:12px"></div>
+      </div>
+      <div class="backup-card">
+        <h3>🎨 Chọn Theme</h3>
+        <p>Thay đổi giao diện launcher. Chọn theme rồi bấm "Áp dụng" để cài lên TV.</p>
+        <div id="themeGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin:12px 0"></div>
+        <div id="themeActions" style="display:none;margin-top:12px;display:flex;gap:12px;align-items:center">
+          <button class="btn primary" onclick="applyTheme()">Áp dụng theme đã chọn</button>
+          <span id="selectedThemeName" style="font-size:12px;color:var(--text-secondary)"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Status Bar -->
+<div class="statusbar">
+  <span id="statusText">Sẵn sàng</span>
+  <span style="margin-left:auto" id="pkgCount"></span>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script src="renderer.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "tv-manager-app",
+  "version": "1.0.0",
+  "description": "Android TV Manager - Quản lý TV qua ADB Wi-Fi",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev"
+  },
+  "keywords": ["android-tv", "adb", "cleanyourtv"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^33.2.1"
+  }
+}
